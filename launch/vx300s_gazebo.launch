@@ -30,10 +30,15 @@
   <node name="spawn_table" pkg="gazebo_ros" type="spawn_model"
         args="-file $(find reactorx200_description)/models/table/model.sdf -sdf -model table -x 0 -y 0 -z 0"/>
 
-  <!-- 3. vx300s URDF (+ head-mount kinect). -->
+  <!-- 3. vx300s URDF (+ head-mount kinect).
+       use_world_frame:=true makes the upstream URDF declare <link name="world"/>
+       and a fixed world→base_link joint — required so the kinect2 xacro,
+       which mounts parent="world", finds something to attach to. Upstream
+       defaults this arg to false (the RX200 fork defaults to true). -->
   <param name="robot_description"
          command="$(find xacro)/xacro --inorder
-                  '$(find viperx300s_description)/urdf/vx300s_kinect.urdf.xacro'"/>
+                  '$(find viperx300s_description)/urdf/vx300s_kinect.urdf.xacro'
+                  use_world_frame:=true"/>
 
   <!-- 4. Spawn the arm on the table top (table_z = 0.78). -->
   <node name="vx300s_spawn" pkg="gazebo_ros" type="spawn_model"
