@@ -12,8 +12,8 @@ Trossen ViperX-300 S sim extras for the `rl_environments` stack. Mirrors
 - Brings up **ros_control** with PID gains tuned for the 6-DOF arm
   (`waist, shoulder, elbow, forearm_roll, wrist_angle, wrist_rotate`)
   plus the 2-finger prismatic gripper (`left_finger, right_finger`).
-- Reuses the `reactorx200_description` desk model (`models/table/`)
-  so both Interbotix sims sit on the same surface.
+- Ships local table + red cube models under `models/` so the VX300S env can
+  spawn the same workspace objects without depending on the RX200 package.
 
 ## Prerequisites
 
@@ -22,7 +22,6 @@ Trossen ViperX-300 S sim extras for the `rl_environments` stack. Mirrors
   `xsarm_amd64_install.sh` script)
 - `interbotix_xsarm_moveit_interface` (same)
 - `interbotix_xsarm_gazebo` (same)
-- `reactorx200_description` (desk model)
 - `common_sensors` (Kinect v2 xacro)
 
 ## Verify the sim works
@@ -33,10 +32,18 @@ roslaunch viperx300s_description vx300s_gazebo.launch            # term 2
 ```
 
 Expected:
-- Gazebo opens, table at origin, vx300s on top at `z=0.78`.
-- `rostopic echo /joint_states` shows 8 joints publishing at ~50 Hz.
-- `rostopic list | grep arm_controller` shows `/arm_controller/command`
+- Gazebo opens with the table at `x=0.2`, red cube on top, and `vx300s`
+  mounted at `z=0.78`.
+- `rostopic echo /vx300s/joint_states` publishes the arm, gripper prop,
+  and finger joints at ~50 Hz.
+- `rostopic list | grep /vx300s/arm_controller` shows `/command`
   + state topics.
+
+To bring up MoveIt against the same Gazebo controllers:
+
+```bash
+roslaunch viperx300s_description vx300s_gazebo.launch start_moveit:=true
+```
 
 ## Layout
 
@@ -51,8 +58,11 @@ viperx300s_description/
 ├── launch/
 │   ├── vx300s_gazebo.launch       # world + table + arm + control
 │   └── vx300s_control.launch      # joint_state + arm + gripper spawn
-└── config/
-    └── vx300s_controller.yaml     # PID gains for arm + gripper
+├── config/
+│   └── vx300s_controller.yaml     # PID gains for arm + gripper
+└── models/
+    ├── table/                     # cafe table model
+    └── block/                     # 4 cm red cube
 ```
 
 ## Why this exists

@@ -2,27 +2,32 @@
   <!--
     Standalone Gazebo bring-up for vx300s sim. Spawns:
       * empty_world with the interbotix xsarm world (reused from RX200)
-      * table model from reactorx200_description (same desk)
+      * local table + red cube models
       * vx300s URDF (with head-mount kinect2)
       * robot_state_publisher
       * ros_control (joint_state + arm + gripper controllers)
 
     Verify with:
       roslaunch viperx300s_description vx300s_gazebo.launch
-      rostopic echo /joint_states          # 8 joints publishing
-      rostopic list | grep arm_controller  # /command + state topics
+      rostopic echo /vx300s/joint_states
+      rostopic list | grep /vx300s/arm_controller
 
-    The RL env's __init__ launches MoveIt separately
-    (interbotix_xsarm_moveit_interface with robot_model:=vx300s);
-    this launch is for visual sanity / standalone controller testing.
+    To include MoveIt in the same bring-up:
+      roslaunch viperx300s_description vx300s_gazebo.launch start_moveit:=true
   -->
-  <arg name="paused"   default="false"/>
-  <arg name="gui"      default="true"/>
+  <arg name="robot_name"           default="vx300s"/>
+  <arg name="paused"               default="false"/>
+  <arg name="gui"                  default="true"/>
+  <arg name="load_cube"            default="true"/>
+  <arg name="start_moveit"         default="false"/>
+  <arg name="use_moveit_rviz"      default="false"/>
+  <arg name="use_python_interface" default="true"/>
 
   <!-- Gazebo needs to find the Custom/Interbotix OGRE material script
        (interbotix_xsarm_gazebo/media/materials/scripts/interbotix_black.material).
        Without this, every link renders white. -->
-  <env name="GAZEBO_RESOURCE_PATH" value="$(find interbotix_xsarm_gazebo)"/>
+  <env name="GAZEBO_RESOURCE_PATH" value="$(find interbotix_xsarm_gazebo):$(optenv GAZEBO_RESOURCE_PATH)"/>
+  <env name="GAZEBO_MODEL_PATH" value="$(find viperx300s_description)/models:$(optenv GAZEBO_MODEL_PATH)"/>
 
   <!-- 1. World. -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -31,9 +36,12 @@
     <arg name="paused"     value="$(arg paused)"/>
   </include>
 
-  <!-- 2. Table (reused from reactorx200_description). -->
+  <!-- 2. Table + red cube. Match the RL env pose: table at x=0.2, cube on the tabletop. -->
   <node name="spawn_table" pkg="gazebo_ros" type="spawn_model"
-        args="-file $(find reactorx200_description)/models/table/model.sdf -sdf -model table -x 0 -y 0 -z 0"/>
+        args="-file $(find viperx300s_description)/models/table/model.sdf -sdf -model table -x 0.2 -y 0 -z 0"/>
+
+  <node if="$(arg load_cube)" name="spawn_cube" pkg="gazebo_ros" type="spawn_model"
+        args="-file $(find viperx300s_description)/models/block/block.sdf -sdf -model red_cube -x 0.35 -y 0 -z 0.795"/>
 
   <!-- 3. vx300s URDF (+ head-mount kinect).
        Two upstream args we have to flip from their defaults:
@@ -45,22 +53,35 @@
                                     + Custom/Interbotix Gazebo materials.
                                     Without this, no controller_manager
                                     starts and the arm renders white. -->
-  <param name="robot_description"
-         command="$(find xacro)/xacro --inorder
-                  '$(find viperx300s_description)/urdf/vx300s_kinect.urdf.xacro'
-                  use_world_frame:=true
-                  load_gazebo_configs:=true"/>
+  <group ns="$(arg robot_name)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro --inorder
+                    '$(find viperx300s_description)/urdf/vx300s_kinect.urdf.xacro'
+                    use_world_frame:=true
+                    load_gazebo_configs:=true"/>
 
-  <!-- 4. Spawn the arm on the table top (table_z = 0.78). -->
-  <node name="vx300s_spawn" pkg="gazebo_ros" type="spawn_model"
-        respawn="false" output="screen"
-        args="-urdf -param robot_description -model vx300s -z 0.78"/>
+    <!-- 4. Spawn the arm on the table top (table_z = 0.78). -->
+    <node name="vx300s_spawn" pkg="gazebo_ros" type="spawn_model"
+          respawn="false" output="screen"
+          args="-urdf -param /$(arg robot_name)/robot_description -robot_namespace /$(arg robot_name) -model $(arg robot_name) -z 0.78"/>
 
-  <!-- 5. State publisher. -->
-  <node name="robot_state_publisher"
-        pkg="robot_state_publisher" type="robot_state_publisher"
-        output="screen"/>
+    <!-- 5. State publisher. -->
+    <node name="robot_state_publisher"
+          pkg="robot_state_publisher" type="robot_state_publisher"
+          output="screen"/>
 
-  <!-- 6. ros_control. -->
-  <include file="$(find viperx300s_description)/launch/vx300s_control.launch"/>
+    <!-- 6. ros_control. -->
+    <include file="$(find viperx300s_description)/launch/vx300s_control.launch"/>
+  </group>
+
+  <!-- 7. Optional MoveIt, using the /vx300s robot_description and controllers above. -->
+  <include if="$(arg start_moveit)"
+           file="$(find interbotix_xsarm_moveit_interface)/launch/xsarm_moveit_interface.launch">
+    <arg name="robot_model"           value="vx300s"/>
+    <arg name="robot_name"            value="$(arg robot_name)"/>
+    <arg name="dof"                   value="6"/>
+    <arg name="use_world_frame"       value="true"/>
+    <arg name="use_moveit_rviz"       value="$(arg use_moveit_rviz)"/>
+    <arg name="use_python_interface"  value="$(arg use_python_interface)"/>
+  </include>
 </launch>

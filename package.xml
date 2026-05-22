@@ -20,8 +20,6 @@
 
   <!-- Upstream URDF + meshes (Interbotix vx300s) -->
   <exec_depend>interbotix_xsarm_descriptions</exec_depend>
-  <!-- Table model + textures, reused as-is -->
-  <exec_depend>reactorx200_description</exec_depend>
   <!-- Kinect v2 xacro -->
   <exec_depend>common_sensors</exec_depend>
 
@@ -39,5 +37,10 @@
   <exec_depend>interbotix_xsarm_gazebo</exec_depend>
 
   <!-- MoveIt config (env launches xsarm_moveit_interface with robot_model:=vx300s) -->
+  <exec_depend>interbotix_xsarm_moveit</exec_depend>
   <exec_depend>interbotix_xsarm_moveit_interface</exec_depend>
+
+  <export>
+    <gazebo_ros gazebo_model_path="${prefix}/.." />
+  </export>
 </package>
