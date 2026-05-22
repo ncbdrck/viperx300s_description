@@ -1,0 +1,47 @@
+# ros_control config for the ViperX-300 S in Gazebo. Same controller
+# layout reactorx200_description uses, extended for the 6-DOF arm
+# (forearm_roll inserted between elbow and wrist_angle) + the same
+# 2-finger gripper.
+#
+# PID gains kept proportional to RX200's values, scaled up where the
+# upstream URDF lists higher effort limits (shoulder, elbow). Tune on
+# hardware if Gazebo arm-droop or oscillation shows up at first run.
+
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50
+
+arm_controller:
+  type: effort_controllers/JointTrajectoryController
+  joints:
+    - waist
+    - shoulder
+    - elbow
+    - forearm_roll
+    - wrist_angle
+    - wrist_rotate
+  gains:
+    waist:        {p: 100.0, d: 1.0, i: 5.0}
+    shoulder:     {p: 800.0, d: 1.0, i: 10.0}  # 20 N·m effort, heavier arm
+    elbow:        {p: 500.0, d: 1.0, i: 10.0}  # 15 N·m effort
+    forearm_roll: {p:  50.0, d: 0.5, i: 1.0}   # 2 N·m, light load
+    wrist_angle:  {p: 150.0, d: 1.0, i: 3.0}
+    wrist_rotate: {p: 100.0, d: 0.1, i: 1.0}
+
+  constraints:
+    goal_time: 0.2
+    waist:        { goal: 0.1, trajectory: 0.2 }
+    shoulder:     { goal: 0.2, trajectory: 0.2 }
+    elbow:        { goal: 0.2, trajectory: 0.2 }
+    forearm_roll: { goal: 0.2, trajectory: 0.2 }
+    wrist_angle:  { goal: 0.2, trajectory: 0.2 }
+    wrist_rotate: { goal: 0.2, trajectory: 0.2 }
+
+gripper_controller:
+  type: effort_controllers/JointTrajectoryController
+  joints:
+    - left_finger
+    - right_finger
+  gains:
+    left_finger:  {p: 100.0, d: 1.0, i: 0.0}
+    right_finger: {p: 100.0, d: 1.0, i: 0.0}

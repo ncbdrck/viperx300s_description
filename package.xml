@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>viperx300s_description</name>
+  <version>0.1.0</version>
+  <description>
+    Trossen ViperX-300 S sim extras for the rl_environments stack. Mounts
+    the vx300s on the same desk model the RX200 sim uses, adds a head-mount
+    Kinect v2, and brings up ros_control with PID gains tuned for the 6-DOF
+    arm + 2 prismatic fingers.
+
+    Mirrors reactorx200_description's role for the RX200 — keeps RL
+    packages free of URDF / launch noise while letting the description
+    ship independently for MoveIt / RViz / standalone simulation.
+  </description>
+
+  <maintainer email="j.kapukotuwa@research.ait.ie">Jay Kapukotuwa</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Upstream URDF + meshes (Interbotix vx300s) -->
+  <exec_depend>interbotix_xsarm_descriptions</exec_depend>
+  <!-- Table model + textures, reused as-is -->
+  <exec_depend>reactorx200_description</exec_depend>
+  <!-- Kinect v2 xacro -->
+  <exec_depend>common_sensors</exec_depend>
+
+  <!-- Gazebo + ros_control runtime -->
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>gazebo_ros_control</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_controller</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>effort_controllers</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <!-- World file (xsarm_gazebo.world reused for visual consistency) -->
+  <exec_depend>interbotix_xsarm_gazebo</exec_depend>
+
+  <!-- MoveIt config (env launches xsarm_moveit_interface with robot_model:=vx300s) -->
+  <exec_depend>interbotix_xsarm_moveit_interface</exec_depend>
+</package>

@@ -1,0 +1,18 @@
+<launch>
+  <!--
+    Spawn ros_control for the vx300s in Gazebo. Loads our PID YAML +
+    spawns the three standard controllers: joint_state_controller (for
+    /joint_states), arm_controller (6 effort-driven trajectory joints),
+    gripper_controller (2 prismatic finger joints).
+
+    Mirrors reactorx200_control.launch's shape so RL bring-up code that
+    targets `controllers_file` + `controllers_list` works identically
+    across the two Interbotix robots.
+  -->
+  <rosparam file="$(find viperx300s_description)/config/vx300s_controller.yaml"
+            command="load"/>
+  <node name="controller_spawner"
+        pkg="controller_manager" type="controller_manager"
+        respawn="false" output="screen"
+        args="spawn arm_controller gripper_controller joint_state_controller"/>
+</launch>

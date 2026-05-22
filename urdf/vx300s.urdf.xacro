@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!--
+  Trossen ViperX-300 S sim base. Wraps the upstream Interbotix URDF so we
+  keep the description local + can add Gazebo extras (kinect) on top
+  without forking the arm definition.
+
+  The upstream URDF defaults robot_name="vx300s" + declares Gazebo
+  transmissions + a world joint; we mount the arm at z=0.78 in the
+  Gazebo launch (table top).
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="vx300s">
+    <xacro:include filename="$(find interbotix_xsarm_descriptions)/urdf/vx300s.urdf.xacro"/>
+</robot>

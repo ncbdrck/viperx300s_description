@@ -1,0 +1,50 @@
+<launch>
+  <!--
+    Standalone Gazebo bring-up for vx300s sim. Spawns:
+      * empty_world with the interbotix xsarm world (reused from RX200)
+      * table model from reactorx200_description (same desk)
+      * vx300s URDF (with head-mount kinect2)
+      * robot_state_publisher
+      * ros_control (joint_state + arm + gripper controllers)
+
+    Verify with:
+      roslaunch viperx300s_description vx300s_gazebo.launch
+      rostopic echo /joint_states          # 8 joints publishing
+      rostopic list | grep arm_controller  # /command + state topics
+
+    The RL env's __init__ launches MoveIt separately
+    (interbotix_xsarm_moveit_interface with robot_model:=vx300s);
+    this launch is for visual sanity / standalone controller testing.
+  -->
+  <arg name="paused"   default="false"/>
+  <arg name="gui"      default="true"/>
+
+  <!-- 1. World. -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find interbotix_xsarm_gazebo)/worlds/xsarm_gazebo.world"/>
+    <arg name="gui"        value="$(arg gui)"/>
+    <arg name="paused"     value="$(arg paused)"/>
+  </include>
+
+  <!-- 2. Table (reused from reactorx200_description). -->
+  <node name="spawn_table" pkg="gazebo_ros" type="spawn_model"
+        args="-file $(find reactorx200_description)/models/table/model.sdf -sdf -model table -x 0 -y 0 -z 0"/>
+
+  <!-- 3. vx300s URDF (+ head-mount kinect). -->
+  <param name="robot_description"
+         command="$(find xacro)/xacro --inorder
+                  '$(find viperx300s_description)/urdf/vx300s_kinect.urdf.xacro'"/>
+
+  <!-- 4. Spawn the arm on the table top (table_z = 0.78). -->
+  <node name="vx300s_spawn" pkg="gazebo_ros" type="spawn_model"
+        respawn="false" output="screen"
+        args="-urdf -param robot_description -model vx300s -z 0.78"/>
+
+  <!-- 5. State publisher. -->
+  <node name="robot_state_publisher"
+        pkg="robot_state_publisher" type="robot_state_publisher"
+        output="screen"/>
+
+  <!-- 6. ros_control. -->
+  <include file="$(find viperx300s_description)/launch/vx300s_control.launch"/>
+</launch>
