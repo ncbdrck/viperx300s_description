@@ -19,6 +19,11 @@
   <arg name="paused"   default="false"/>
   <arg name="gui"      default="true"/>
 
+  <!-- Gazebo needs to find the Custom/Interbotix OGRE material script
+       (interbotix_xsarm_gazebo/media/materials/scripts/interbotix_black.material).
+       Without this, every link renders white. -->
+  <env name="GAZEBO_RESOURCE_PATH" value="$(find interbotix_xsarm_gazebo)"/>
+
   <!-- 1. World. -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find interbotix_xsarm_gazebo)/worlds/xsarm_gazebo.world"/>
@@ -31,14 +36,20 @@
         args="-file $(find reactorx200_description)/models/table/model.sdf -sdf -model table -x 0 -y 0 -z 0"/>
 
   <!-- 3. vx300s URDF (+ head-mount kinect).
-       use_world_frame:=true makes the upstream URDF declare <link name="world"/>
-       and a fixed world→base_link joint — required so the kinect2 xacro,
-       which mounts parent="world", finds something to attach to. Upstream
-       defaults this arg to false (the RX200 fork defaults to true). -->
+       Two upstream args we have to flip from their defaults:
+         use_world_frame:=true   → declare <link name="world"/> + fixed
+                                    world→base_link joint (otherwise the
+                                    kinect2 xacro can't mount parent="world").
+         load_gazebo_configs:=true → include interbotix_texture.gazebo, which
+                                    declares the gazebo_ros_control plugin
+                                    + Custom/Interbotix Gazebo materials.
+                                    Without this, no controller_manager
+                                    starts and the arm renders white. -->
   <param name="robot_description"
          command="$(find xacro)/xacro --inorder
                   '$(find viperx300s_description)/urdf/vx300s_kinect.urdf.xacro'
-                  use_world_frame:=true"/>
+                  use_world_frame:=true
+                  load_gazebo_configs:=true"/>
 
   <!-- 4. Spawn the arm on the table top (table_z = 0.78). -->
   <node name="vx300s_spawn" pkg="gazebo_ros" type="spawn_model"
