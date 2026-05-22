@@ -67,9 +67,7 @@ viperx300s_description/
 
 ## Why this exists
 
-Catkin doesn't allow nested packages. Dropping URDFs / launch files into
-`rl_environments` works but bloats an RL-focused package and prevents
-reusing the description for MoveIt / RViz demos. Separate description
-package is the canonical ROS pattern; same shape as
-`niryo_ned2_description_extras` (NED2) and `reactorx200_description`
-(RX200).
+Separate description package is the canonical ROS pattern — keeps URDF
+/ launch files reusable for MoveIt / RViz demos independent of the
+RL stack. Same shape as `niryo_ned2_description_extras` (NED2) and
+`reactorx200_description` (RX200).
